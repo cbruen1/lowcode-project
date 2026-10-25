@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact Us</title>
+  <style>
+    :root { --bg:#f4f6fb; --card:#fff; --text:#1d2433; --muted:#5d667a; --border:#cfd5e2;
+            --accent:#3b5bdb; --accent-dark:#2f49b0; --error:#c92a2a; --ok:#2b8a3e; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#12151c; --card:#1b2030; --text:#e8ebf3; --muted:#9aa3b8; --border:#343b52;
+              --accent:#748ffc; --accent-dark:#91a7ff; --error:#ff8787; --ok:#69db7c; } }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:16px;
+           font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+    .card { width:100%; max-width:520px; background:var(--card); padding:32px; border-radius:14px;
+            box-shadow:0 8px 30px rgba(0,0,0,.08); }
+    h1 { margin:0 0 4px; font-size:1.6rem; }
+    .sub { margin:0 0 24px; color:var(--muted); }
+    .field { margin-bottom:18px; }
+    label { display:block; font-weight:600; margin-bottom:6px; font-size:.95rem; }
+    input, select, textarea { width:100%; padding:10px 12px; font:inherit; color:inherit;
+           background:transparent; border:1px solid var(--border); border-radius:8px; }
+    textarea { min-height:130px; resize:vertical; }
+    input:focus, select:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }
+    .invalid { border-color: var(--error); }
+    .err { color:var(--error); font-size:.85rem; margin-top:4px; }
+    .hp { position:absolute; left:-9999px; }
+    button { width:100%; padding:12px; font:inherit; font-weight:600; color:#fff; background:var(--accent);
+             border:0; border-radius:8px; cursor:pointer; }
+    button:hover { background:var(--accent-dark); }
+    .banner { margin-bottom:18px; padding:12px; border-radius:8px; border:1px solid var(--error); color:var(--error); }
+    .flash { margin-bottom:18px; padding:12px; border-radius:8px; border:1px solid var(--ok); color:var(--ok); }
+  </style>
+</head>
+<body>
+<main class="card">
+  <h1>Get in touch</h1>
+  <p class="sub">Send us a message and we'll reply as soon as we can.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash" role="status">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if errors %}
+    <div class="banner" role="alert">Please fix the errors below and try again.</div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('contact') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="field">
+      <label for="name">Name</label>
+      <input id="name" name="name" autocomplete="name" required maxlength="100"
+             value="{{ values.get('name', '') }}"
+             {% if errors.name %}class="invalid" aria-invalid="true" aria-describedby="name-err"{% endif %}>
+      {% if errors.name %}<div class="err" id="name-err">{{ errors.name }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required
+             value="{{ values.get('email', '') }}"
+             {% if errors.email %}class="invalid" aria-invalid="true" aria-describedby="email-err"{% endif %}>
+      {% if errors.email %}<div class="err" id="email-err">{{ errors.email }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+      <label for="topic">Topic</label>
+      <select id="topic" name="topic">
+        {% for t in topics %}
+          <option value="{{ t }}" {{ 'selected' if values.get('topic') == t }}>{{ t }}</option>
+        {% endfor %}
+      </select>
+      {% if errors.topic %}<div class="err">{{ errors.topic }}</div>{% endif %}
+    </div>
+
+    <div class="field">
+      <label for="message">Message</label>
+      <textarea id="message" name="message" required minlength="10" maxlength="1000"
+                {% if errors.message %}class="invalid" aria-invalid="true" aria-describedby="message-err"{% endif %}>{{ values.get('message', '') }}</textarea>
+      {% if errors.message %}<div class="err" id="message-err">{{ errors.message }}</div>{% endif %}
+    </div>
+
+    {# Honeypot: hidden from humans, bots tend to fill it #}
+    <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+    <button type="submit">Send message</button>
+  </form>
+</main>
+</body>
+</html>
