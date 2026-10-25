@@ -1,9 +1,10 @@
 # Hello Flask App
 
-A minimal Flask 3 web app with two pages:
+A minimal Flask 3 web app with three pages:
 
 - `/` says "Hello from Ciaran".
 - `/about` answers "What would I build if it took an evening instead of a quarter?"
+- `/contact` displays a contact form.
 
 ## Requirements
 
