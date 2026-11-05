@@ -1,0 +1,24 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro chip(status) -%}
+{%- set meta = {'present': ('✓','Present'), 'late': ('◷','Late'), 'absent': ('✕','Absent'),
+                'pending': ('–','Not recorded'), 'scheduled': ('○','Scheduled'), 'cancelled': ('✕','Cancelled')} -%}
+{%- set m = meta.get(status, ('–', status|capitalize)) -%}
+<span class="chip {{ status }}"><span aria-hidden="true">{{ m[0] }}</span>{{ m[1] }}</span>
+{%- endmacro %}
+
+{% macro avatar(name) %}<span class="avatar" aria-hidden="true">{{ name|initials }}</span>{% endmacro %}
+
+{% macro flashes() %}
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% for cat, msg in msgs %}<div class="flash {{ cat }}" role="{{ 'alert' if cat == 'error' else 'status' }}">{{ msg }}</div>{% endfor %}
+{% endwith %}
+{% endmacro %}
+
+{% macro field(name, label, value='', type='text', hint='', required=True, autocomplete='off') %}
+<div class="field">
+  <label for="{{ name }}">{{ label }}</label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value or '' }}" autocomplete="{{ autocomplete }}" {{ 'required' if required }}>
+  {% if hint %}<div class="hint">{{ hint }}</div>{% endif %}
+</div>
+{% endmacro %}

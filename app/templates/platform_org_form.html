@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}{{ org.name if org else 'New organisation' }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="small muted m0"><a href="{{ url_for('platform.index') }}">← Organisations</a></p><h1>{{ org.name if org else 'New organisation' }}</h1></div></div>
+{% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+<div class="cols two">
+<form class="card" method="post">
+  {{ csrf() }}
+  <h2>Organisation</h2>
+  <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" required value="{{ f.get('name') if f and f.get('name') is not none else (org.name if org else '') }}"></div>
+  {% set tzv = f.get('time_zone') or (org.time_zone if org else 'Europe/Dublin') %}
+  <div class="field"><label for="time_zone">Time zone</label>
+    <select id="time_zone" name="time_zone">{% for tz in tzs %}<option value="{{ tz }}" {{ 'selected' if tz == tzv }}>{{ tz }}</option>{% endfor %}</select>
+    <div class="hint">Class times follow this zone and adjust automatically for daylight saving.</div></div>
+  <div class="field"><label for="privacy_contact_email">Privacy contact email</label>
+    <input id="privacy_contact_email" name="privacy_contact_email" type="email" value="{{ f.get('privacy_contact_email') if f and f.get('privacy_contact_email') is not none else (org.privacy_contact_email if org else '') }}"></div>
+  <h2 class="mt6">{{ 'Admin' if org else 'First admin' }}</h2>
+  {% set an = f.get('admin_name') if f and f.get('admin_name') is not none else (admin.name if admin else '') %}
+  {% set ae = f.get('admin_email') if f and f.get('admin_email') is not none else (admin.email if admin else '') %}
+  <div class="row two">
+    <div class="field"><label for="admin_name">Admin name</label><input id="admin_name" name="admin_name" type="text" required value="{{ an }}"></div>
+    <div class="field"><label for="admin_email">Admin email</label><input id="admin_email" name="admin_email" type="email" required value="{{ ae }}"></div>
+  </div>
+  {% if org %}
+  <label class="check"><input type="checkbox" name="active" value="1" {{ 'checked' if org.active }}><span>Organisation is active (inactive organisations can't sign in)</span></label>
+  {% endif %}
+  <div class="actions"><button class="btn primary" type="submit">{{ 'Save changes' if org else 'Create organisation' }}</button></div>
+</form>
+{% if org %}
+<div class="stack">
+  <section class="card"><h2>Usage</h2>
+    <div class="stats"><div><strong>{{ counts.tutors }}</strong><span class="small muted">Tutors</span></div><div><strong>{{ counts.classes }}</strong><span class="small muted">Classes</span></div><div><strong>{{ counts.students }}</strong><span class="small muted">Students</span></div></div>
+    <p class="muted small m0">Counts only. Student data isn't visible here.</p></section>
+  {% if admin %}
+  <section class="card"><h2>Reset admin password</h2>
+    <p class="muted small">Shows a new temporary password once.</p>
+    <form method="post" action="{{ url_for('platform.reset_admin', org_id=org.id) }}">{{ csrf() }}<button class="btn" type="submit">Reset password</button></form></section>
+  {% endif %}
+  <section class="card"><h2>Replace admin</h2>
+    <p class="muted small">The current admin becomes an inactive tutor. Their classes stay and can be reassigned.</p>
+    <form method="post" action="{{ url_for('platform.replace_admin', org_id=org.id) }}">{{ csrf() }}
+      <div class="field"><label for="ra_name">New admin name</label><input id="ra_name" name="admin_name" type="text" required></div>
+      <div class="field"><label for="ra_email">New admin email</label><input id="ra_email" name="admin_email" type="email" required></div>
+      <button class="btn danger" type="submit">Replace admin</button></form></section>
+</div>
+{% endif %}
+</div>
+{% endblock %}

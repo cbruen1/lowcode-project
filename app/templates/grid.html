@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chip %}
+{% block title %}Attendance grid{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="small muted m0"><a href="{{ url_for('tutor.class_detail', class_id=cls.id) }}">← {{ cls.name }}</a></p><h1>Attendance grid</h1></div>
+</div>
+{% if not roster or not sessions %}
+<div class="card empty">Nothing to show yet. Add students and wait for the first session.</div>
+{% else %}
+<p class="muted small">Showing the last {{ sessions|length }} sessions. Scroll sideways for more.</p>
+<div class="card flush scroll-x">
+<table class="gridtable">
+  <thead><tr><th scope="col">Student</th>
+    {% for s in sessions %}<th scope="col" class="{{ 'cancelled' if s.status == 'cancelled' }}"><a href="{{ url_for('tutor.session_view', session_id=s.id) }}">{{ s.date|dt('%d %b') }}</a></th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for st in roster %}<tr><th scope="row">{{ st.name }}</th>
+    {% for s in sessions %}<td>{% if s.status == 'cancelled' %}<span class="muted">–</span><span class="sr-only">Cancelled</span>
+      {% else %}{{ chip(cell.get((s.id, st.id), 'pending')) }}{% endif %}</td>{% endfor %}</tr>{% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

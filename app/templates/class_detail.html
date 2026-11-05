@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, chip, avatar %}
+{% block title %}{{ cls.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ cls.name }}</h1>
+    <p class="muted m0">{{ WEEKDAYS[cls.weekday] }}s at {{ cls.start_time.strftime('%H:%M') }} · {{ cls.duration_minutes }} min
+      {% if current_user.is_admin %}· Tutor: {{ cls.tutor.name }}{% endif %}
+      {% if cls.ended_on %}· <strong>Ended {{ cls.ended_on|dt }}</strong>{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('tutor.class_grid', class_id=cls.id) }}">Attendance grid</a>
+    <a class="btn" href="{{ url_for('tutor.class_edit', class_id=cls.id) }}">Edit</a>
+  </div>
+</div>
+{% if cls.description %}<p>{{ cls.description }}</p>{% endif %}
+<div class="cols two">
+  <div class="stack">
+    <section class="card flush" aria-labelledby="up-h">
+      <div class="card-head"><h2 id="up-h">Upcoming sessions</h2></div>
+      {% if upcoming %}<ul class="list">
+        {% for s in upcoming %}
+        <li><a href="{{ url_for('tutor.session_view', session_id=s.id) }}">{{ s.local_start()|dt('%a %d %b · %H:%M') }}</a>
+          {{ chip('cancelled') if s.status == 'cancelled' else chip('scheduled') }}</li>
+        {% endfor %}
+      </ul>{% else %}<p class="empty">No upcoming sessions.</p>{% endif %}
+    </section>
+    <section class="card flush" aria-labelledby="past-h">
+      <div class="card-head"><h2 id="past-h">Recent sessions</h2></div>
+      {% if past %}<ul class="list">
+        {% for s in past %}{% set c = counts.get(s.id, {}) %}
+        <li><a href="{{ url_for('tutor.session_view', session_id=s.id) }}">{{ s.local_start()|dt('%a %d %b · %H:%M') }}</a>
+          {% if s.status == 'cancelled' %}{{ chip('cancelled') }}{% else %}
+          <span class="pill-row">{{ chip('present') if c.get('present') }}{{ chip('late') if c.get('late') }}{{ chip('absent') if c.get('absent') }}{% if not c %}{{ chip('pending') }}{% endif %}</span>
+          <span class="sr-only">{{ c.get('present', 0) }} present, {{ c.get('late', 0) }} late, {{ c.get('absent', 0) }} absent</span>{% endif %}</li>
+        {% endfor %}
+      </ul>{% else %}<p class="empty">No past sessions yet.</p>{% endif %}
+    </section>
+  </div>
+  <div class="stack">
+    <section class="card" id="roster" aria-labelledby="roster-h">
+      <h2 id="roster-h">Students ({{ roster|length }})</h2>
+      {% if roster %}<ul class="list flush-list">
+        {% for e in roster %}<li><span>{{ e.student.name }}</span>
+          <form class="inline" method="post" action="{{ url_for('tutor.class_unenrol', class_id=cls.id) }}">{{ csrf() }}<input type="hidden" name="student_id" value="{{ e.student_id }}"><button class="btn quiet small" type="submit">Remove</button></form></li>{% endfor %}
+      </ul>{% else %}<p class="muted">No students enrolled yet.</p>{% endif %}
+      {% if available %}
+      <form method="post" action="{{ url_for('tutor.class_enrol', class_id=cls.id) }}" class="mt4">
+        {{ csrf() }}<div class="field"><label for="student_id">Add a registered student</label>
+        <select id="student_id" name="student_id">{% for st in available %}<option value="{{ st.id }}">{{ st.name }} ({{ st.email }})</option>{% endfor %}</select></div>
+        <button class="btn" type="submit">Add to class</button>
+      </form>{% endif %}
+      <p class="mt4"><a href="{{ url_for('tutor.class_import', class_id=cls.id) }}">Import students from CSV</a></p>
+    </section>
+    {% if not cls.ended_on %}
+    {% if current_user.is_admin and tutors|length > 1 %}
+    <section class="card"><h2>Class owner</h2>
+      <form method="post" action="{{ url_for('tutor.class_owner', class_id=cls.id) }}">{{ csrf() }}
+        <div class="field"><label for="tutor_id" class="sr-only">Tutor</label>
+        <select id="tutor_id" name="tutor_id">{% for t in tutors %}<option value="{{ t.id }}" {{ 'selected' if t.id == cls.tutor_id }}>{{ t.name }}</option>{% endfor %}</select></div>
+        <button class="btn" type="submit">Change owner</button></form></section>
+    {% endif %}
+    <section class="card"><h2>End this class</h2>
+      <p class="muted small">Stops future sessions. Past sessions and attendance are kept.</p>
+      <form method="post" action="{{ url_for('tutor.class_end', class_id=cls.id) }}">{{ csrf() }}<button class="btn danger" type="submit">End class</button></form></section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

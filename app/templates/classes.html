@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+{% block title %}Classes{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ 'All classes' if current_user.is_admin else 'My classes' }}</h1>
+  <a class="btn primary" href="{{ url_for('tutor.class_new') }}">New class</a>
+</div>
+{% if not active and not ended %}
+  <div class="card empty"><p>No classes yet.</p><a class="btn primary" href="{{ url_for('tutor.class_new') }}">Create your first class</a></div>
+{% endif %}
+{% if active %}
+<div class="tiles">
+  {% for c, nxt, n in active %}
+  <a class="tile" href="{{ url_for('tutor.class_detail', class_id=c.id) }}">
+    <span class="name">{{ c.name }}</span>
+    <span class="sub">{{ WEEKDAYS[c.weekday] }}s {{ c.start_time.strftime('%H:%M') }}</span>
+    <span class="sub">{{ n }} student{{ '' if n == 1 else 's' }}{% if current_user.is_admin %} · {{ c.tutor.name }}{% endif %}</span>
+    {% if nxt %}<span class="sub">Next: {{ nxt.date|dt('%a %d %b') }}</span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% if ended %}
+<h2 class="mt6">Ended</h2>
+<div class="card flush"><ul class="list">
+  {% for c, nxt, n in ended %}
+  <li><a href="{{ url_for('tutor.class_detail', class_id=c.id) }}">{{ c.name }}</a><span class="muted small">Ended {{ c.ended_on|dt }}</span></li>
+  {% endfor %}
+</ul></div>
+{% endif %}
+{% endblock %}

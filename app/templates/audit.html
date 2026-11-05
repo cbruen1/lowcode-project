@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chip %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Audit log</h1></div>
+<p class="muted">The latest 200 changes{{ ' across your organisation' if current_user.is_admin else ' in your classes' }}. Times are local. No student names or emails are stored here.</p>
+{% if rows %}
+<div class="card flush scroll-x">
+<table class="table">
+  <thead><tr><th>When</th><th>Who</th><th>What</th><th>Class</th><th>Change</th></tr></thead>
+  <tbody>{% for r in rows %}<tr>
+    <td data-label="When">{{ r.when|dt('%d %b %Y %H:%M') }}</td>
+    <td data-label="Who">{{ r.actor }}</td>
+    <td data-label="What">{{ r.action.replace('.', ' · ').replace('_', ' ') }}</td>
+    <td data-label="Class">{% if r.cls %}{{ r.cls.name }}{% else %}–{% endif %}</td>
+    <td data-label="Change">{% if r.before or r.after %}
+      {% if r.before and r.before.get('status') %}{{ chip(r.before.status) }} →{% endif %}
+      {% if r.after and r.after.get('status') %}{{ chip(r.after.status) }}{% elif r.after is none %}–{% else %}<span class="muted small">{{ r.after }}</span>{% endif %}
+      {% else %}–{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<div class="card empty">Nothing recorded yet.</div>{% endif %}
+{% endblock %}

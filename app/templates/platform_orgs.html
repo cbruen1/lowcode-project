@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Organisations{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Organisations</h1><a class="btn primary" href="{{ url_for('platform.new_org') }}">New organisation</a></div>
+{% if rows %}
+<div class="card flush scroll-x">
+<table class="table">
+  <thead><tr><th>Name</th><th>Admin</th><th>Time zone</th><th>Tutors</th><th>Classes</th><th>Students</th><th>Status</th></tr></thead>
+  <tbody>{% for o, c, admin in rows %}<tr>
+    <td data-label="Name"><a href="{{ url_for('platform.edit_org', org_id=o.id) }}">{{ o.name }}</a></td>
+    <td data-label="Admin">{{ admin.name if admin else '–' }}</td>
+    <td data-label="Time zone">{{ o.time_zone }}</td>
+    <td data-label="Tutors">{{ c.tutors }}</td><td data-label="Classes">{{ c.classes }}</td><td data-label="Students">{{ c.students }}</td>
+    <td data-label="Status">{% if o.active %}<span class="chip present"><span aria-hidden="true">✓</span>Active</span>{% else %}<span class="chip neutral"><span aria-hidden="true">–</span>Inactive</span>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<div class="card empty"><p>No organisations yet.</p><a class="btn primary" href="{{ url_for('platform.new_org') }}">Create the first one</a></div>{% endif %}
+{% endblock %}

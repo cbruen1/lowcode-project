@@ -1,0 +1,25 @@
+# Run with:  docker compose up --build
+# Put SECRET_KEY (and any overrides) in a .env file next to this one (see .env.example).
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in a .env file}
+      BASE_URL: ${BASE_URL:-http://localhost:8000}
+      # 0 = allow login over plain http://localhost. Use 1 behind HTTPS in production.
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-0}
+      DATABASE_PATH: /data/attendance.db
+      PRIVACY_NOTICE: ${PRIVACY_NOTICE:-}
+    volumes:
+      - attendance-data:/data   # keeps the SQLite database between restarts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/login')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  attendance-data:

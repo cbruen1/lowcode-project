@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Delete student data{% endblock %}
+{% block content %}
+<div class="center-card"><form class="card" method="post">
+  {{ csrf() }}
+  <h1>Delete {{ st.name }}?</h1>
+  <p>This permanently deletes this student, their enrolments and <strong>{{ n }}</strong> attendance record{{ '' if n == 1 else 's' }}. It can't be undone.</p>
+  <p class="muted small">The audit log keeps no names or emails, so nothing personal remains.</p>
+  <div class="field"><label for="confirm">Type DELETE to confirm</label><input id="confirm" name="confirm" type="text" autocomplete="off"></div>
+  <div class="actions"><button class="btn danger" type="submit">Delete permanently</button>
+  <a class="btn" href="{{ url_for('tutor.students', selected=st.id) }}">Cancel</a></div>
+</form></div>
+{% endblock %}

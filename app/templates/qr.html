@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}QR check-in{% endblock %}
+{% block header %}{% endblock %}
+{% block head %}{% if state in ('not_open',) %}<meta http-equiv="refresh" content="30">{% endif %}{% endblock %}
+{% block content %}
+{% set n, path = svg %}
+<div class="qr-page" data-live-url="{{ url_for('tutor.session_live', session_id=s.id) }}" data-live-version="{{ live_version }}">
+  <h1>{{ cls.name }}</h1>
+  <p class="muted">{{ s.local_start()|dt('%A %d %B · %H:%M') }}</p>
+  {% if state == 'open' %}
+    <svg viewBox="-2 -2 {{ n + 4 }} {{ n + 4 }}" role="img" aria-label="QR code to check in" shape-rendering="crispEdges">
+      <rect x="-2" y="-2" width="{{ n + 4 }}" height="{{ n + 4 }}" fill="#fff"/><path class="qr-fill" d="{{ path }}"/>
+    </svg>
+    <p class="qr-url">Scan to check in, or go to<br><strong>{{ url }}</strong></p>
+  {% else %}
+    <div class="card"><p>
+      {% if state == 'not_open' %}Check-in opens at {{ opens_local|dt('%H:%M') }}. This page refreshes itself.
+      {% elif state == 'closed' %}Check-in for this session has closed.
+      {% else %}Check-in isn't available for this session.{% endif %}</p></div>
+  {% endif %}
+  <a class="btn" href="{{ url_for('tutor.session_view', session_id=s.id) }}">Back to session</a>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/live.js') }}"></script>{% endblock %}
