@@ -89,6 +89,8 @@ def class_new():
                 first = date.fromisoformat(f.get("first_date", ""))
             except ValueError:
                 raise services.ServiceError("Choose the date of the first class.")
+            except TypeError:
+                raise services.ServiceError("Choose a valid date for the first class.")            
             if first.weekday() != data["weekday"]:
                 first = next_weekday_on_or_after(first, data["weekday"])
             c = Class(organisation_id=current_user.organisation_id, tutor_id=current_user.id,
