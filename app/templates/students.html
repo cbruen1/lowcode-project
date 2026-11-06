@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, avatar %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Students <span class="muted small">({{ people|length }})</span></h1>
+  <div class="actions"><a class="btn" href="{{ url_for('tutor.students_import') }}">Import CSV</a></div>
+</div>
+{% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+<div class="dir {{ 'has-selection' if selected }}">
+  <div>
+    <form method="get" class="searchbar mb4" role="search">
+      <label class="sr-only" for="q">Search students</label>
+      <input id="q" name="q" type="search" value="{{ q }}" placeholder="Search by name or email">
+      <button class="btn" type="submit">Search</button>
+    </form>
+    {% if people %}
+    <form method="get">
+      {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+      <div class="tiles">
+        {% for st in people %}
+        <button class="tile {{ 'selected' if selected and selected.id == st.id }}" type="submit" name="selected" value="{{ st.id }}" {% if selected and selected.id == st.id %}aria-current="true"{% endif %}>
+          {{ avatar(st.name) }}<span class="name">{{ st.name }}</span><span class="sub">{{ st.email }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </form>
+    {% else %}
+      <div class="card empty">{{ 'No students match your search.' if q else 'No students registered yet.' }}</div>
+    {% endif %}
+    <details class="card mt6" {{ 'open' if error }}>
+      <summary><strong>Add a student</strong></summary>
+      <form method="post" class="mt4">
+        {{ csrf() }}
+        <div class="row two">
+          <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" required value="{{ request.form.get('name', '') }}"></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required value="{{ request.form.get('email', '') }}"></div>
+        </div>
+        <button class="btn primary" type="submit">Add student</button>
+      </form>
+    </details>
+  </div>
+  {% if selected %}
+  <aside class="panel" aria-label="Student details">
+    <a class="btn quiet small close" href="{{ url_for('tutor.students', q=q or None) }}">Close</a>
+    <div class="avatar big" aria-hidden="true">{{ selected.name|initials }}</div>
+    <h2 class="mt3">{{ selected.name }}</h2>
+    <p class="muted">{{ selected.email }}</p>
+    <div class="stats">
+      <div><strong>{{ detail.present }}</strong><span class="small muted">Present</span></div>
+      <div><strong>{{ detail.late }}</strong><span class="small muted">Late</span></div>
+      <div><strong>{{ detail.absent }}</strong><span class="small muted">Absent</span></div>
+    </div>
+    <h3>Classes</h3>
+    {% if detail.classes %}<ul class="list flush-list">{% for c in detail.classes %}<li><a href="{{ url_for('tutor.class_detail', class_id=c.id) }}">{{ c.name }}</a></li>{% endfor %}</ul>
+    {% else %}<p class="muted small">Not enrolled in any of your classes.</p>{% endif %}
+    <p class="mt4"><a class="btn danger block" href="{{ url_for('tutor.student_delete', student_id=selected.id) }}">Delete student data…</a></p>
+  </aside>
+  {% endif %}
+</div>
+{% endblock %}

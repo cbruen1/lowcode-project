@@ -1,0 +1,51 @@
+{% from "_macros.html" import csrf, flashes %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Attendance{% endblock %} · Attendance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+{% block header %}
+{% set ep = request.endpoint or '' %}
+<header class="app-header">
+  <div class="bar">
+    <a class="brand" href="{{ url_for('auth.home') }}">Attendance</a>
+    {% if current_user.is_authenticated %}
+      {% if current_user.kind == 'platform' %}
+        {% set links = [('platform.index', 'Organisations', ep.startswith('platform.'))] %}
+      {% else %}
+        {% set links = [('tutor.classes', 'Classes', ep.startswith('tutor.class') or ep.startswith('tutor.session')),
+                        ('tutor.students', 'Students', ep.startswith('tutor.student')),
+                        ('tutor.audit_log', 'Audit log', ep == 'tutor.audit_log')] %}
+        {% if current_user.is_admin %}{% set links = links + [('admin.tutors', 'Tutors', ep.startswith('admin.'))] %}{% endif %}
+      {% endif %}
+      <nav class="nav-links" aria-label="Main">
+        {% for endpoint, label, active in links %}<a href="{{ url_for(endpoint) }}" {% if active %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+        <span class="who">{{ current_user.name }}</span>
+        <a href="{{ url_for('auth.change_password') }}">Password</a>
+        <form class="inline" method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button type="submit">Sign out</button></form>
+      </nav>
+      <details class="menu">
+        <summary aria-label="Menu">Menu</summary>
+        <div class="menu-list">
+          {% for endpoint, label, active in links %}<a href="{{ url_for(endpoint) }}" {% if active %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+          <a href="{{ url_for('auth.change_password') }}">Password</a>
+          <form class="inline" method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button type="submit">Sign out ({{ current_user.name }})</button></form>
+        </div>
+      </details>
+    {% endif %}
+  </div>
+</header>
+{% endblock %}
+<main class="container">
+  {{ flashes() }}
+  {% block content %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

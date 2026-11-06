@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<div class="center-card">
+  <form class="card" method="post" novalidate>
+    {{ csrf() }}
+    <h1>{{ 'Platform sign in' if platform else 'Sign in' }}</h1>
+    {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+    {{ field('email', 'Email', request.form.get('email'), 'email', autocomplete='username') }}
+    {{ field('password', 'Password', '', 'password', autocomplete='current-password') }}
+    <button class="btn primary block" type="submit">Sign in</button>
+  </form>
+</div>
+{% endblock %}

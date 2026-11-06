@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}{{ 'Edit class' if cls else 'New class' }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ 'Edit class' if cls else 'New class' }}</h1></div>
+<form class="card form-narrow" method="post">
+  {{ csrf() }}
+  {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+  <div class="field"><label for="name">Class name</label><input id="name" name="name" type="text" required value="{{ f.get('name') if f and f.get('name') is not none else (cls.name if cls else '') }}"></div>
+  <div class="field"><label for="description">Description (optional)</label><textarea id="description" name="description">{{ f.get('description') if f and f.get('description') is not none else (cls.description if cls else '') }}</textarea></div>
+  {% set wd = (f.get('weekday')|int) if f and f.get('weekday') else (cls.weekday if cls else 0) %}
+  <div class="row two">
+    <div class="field"><label for="weekday">Repeats every</label>
+      <select id="weekday" name="weekday">{% for d in WEEKDAYS %}<option value="{{ loop.index0 }}" {{ 'selected' if loop.index0 == wd }}>{{ d }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="start_time">Start time</label>
+      <input id="start_time" name="start_time" type="time" required value="{{ f.get('start_time') if f and f.get('start_time') else (cls.start_time.strftime('%H:%M') if cls else '19:00') }}">
+      <div class="hint">Local time. It stays the same all year, including across clock changes.</div></div>
+  </div>
+  <div class="row two">
+    <div class="field"><label for="duration_minutes">Length (minutes)</label>
+      <input id="duration_minutes" name="duration_minutes" type="number" min="5" max="600" value="{{ f.get('duration_minutes') if f and f.get('duration_minutes') else (cls.duration_minutes if cls else 60) }}"></div>
+    {% if not cls %}
+    <div class="field"><label for="first_date">First class on or after</label>
+      <input id="first_date" name="first_date" type="date" required value="{{ f.get('first_date') or today.isoformat() }}"></div>
+    {% endif %}
+  </div>
+  <div class="field"><label for="late_after_minutes">Mark late after (minutes past start)</label>
+    <input id="late_after_minutes" name="late_after_minutes" type="number" min="0" max="240" value="{{ f.get('late_after_minutes') if f and f.get('late_after_minutes') else (cls.late_after_minutes if cls else 10) }}"></div>
+  <h2>QR self check-in</h2>
+  <label class="check"><input type="checkbox" name="qr_checkin_enabled" value="1" {{ 'checked' if (f.get('qr_checkin_enabled') == '1') or (not f and cls and cls.qr_checkin_enabled) }}><span>Let students check themselves in by scanning a QR code</span></label>
+  <div class="row two">
+    <div class="field"><label for="checkin_opens_before_minutes">Opens (minutes before start)</label>
+      <input id="checkin_opens_before_minutes" name="checkin_opens_before_minutes" type="number" min="0" max="240" value="{{ f.get('checkin_opens_before_minutes') if f and f.get('checkin_opens_before_minutes') else (cls.checkin_opens_before_minutes if cls else 15) }}"></div>
+    <div class="field"><label for="checkin_closes_after_minutes">Closes (minutes after start)</label>
+      <input id="checkin_closes_after_minutes" name="checkin_closes_after_minutes" type="number" min="0" max="600" value="{{ f.get('checkin_closes_after_minutes') if f and f.get('checkin_closes_after_minutes') else (cls.checkin_closes_after_minutes if cls else 30) }}"></div>
+  </div>
+  {% if cls %}<p class="muted small">Changing the day, time or length only affects future sessions that have no attendance recorded yet.</p>{% endif %}
+  <div class="actions">
+    <button class="btn primary" type="submit">{{ 'Save class' if cls else 'Create class' }}</button>
+    <a class="btn" href="{{ url_for('tutor.class_detail', class_id=cls.id) if cls else url_for('tutor.classes') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

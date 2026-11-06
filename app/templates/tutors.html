@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Tutors{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Tutors</h1></div>
+{% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+<div class="cols two">
+<div class="card flush scroll-x">
+  {% if tutors %}
+  <table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Classes</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+    <tbody>{% for t in tutors %}<tr>
+      <td data-label="Name">{{ t.name }}</td><td data-label="Email">{{ t.email }}</td><td data-label="Classes">{{ counts[t.id] }}</td>
+      <td data-label="Status">{% if t.active %}<span class="chip present"><span aria-hidden="true">✓</span>Active</span>{% else %}<span class="chip neutral"><span aria-hidden="true">–</span>Inactive</span>{% endif %}</td>
+      <td class="act"><div class="actions">
+        <form class="inline" method="post" action="{{ url_for('admin.reset', uid=t.id) }}">{{ csrf() }}<button class="btn small" type="submit">Reset password</button></form>
+        <form class="inline" method="post" action="{{ url_for('admin.toggle', uid=t.id) }}">{{ csrf() }}<button class="btn small {{ 'danger' if t.active }}" type="submit">{{ 'Deactivate' if t.active else 'Reactivate' }}</button></form>
+      </div></td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="empty">No tutors yet. Add your first tutor.</p>{% endif %}
+</div>
+<form class="card" method="post">
+  {{ csrf() }}
+  <h2>Add a tutor</h2>
+  <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" required value="{{ request.form.get('name', '') }}"></div>
+  <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required value="{{ request.form.get('email', '') }}"></div>
+  <p class="muted small">A temporary password is shown once on the next screen. No email is sent.</p>
+  <button class="btn primary" type="submit">Add tutor</button>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, chip %}
+{% block title %}Check in{% endblock %}
+{% block header %}{% endblock %}
+{% block content %}
+<div class="center-card">
+  <div class="card stack">
+    <div><p class="small muted m0">{{ org.name }}</p><h1 class="m0">{{ cls.name }}</h1></div>
+    {% if done %}
+      <div class="flash ok" role="status"><strong>You're checked in{{ ' (late)' if done.status == 'late' }}.</strong> Thank you, {{ done.submitted_name }}.</div>
+    {% elif state != 'open' %}
+      <div class="flash" role="status">{{ error }}</div>
+    {% else %}
+      <form method="post" novalidate>
+        {{ csrf() }}
+        {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+        <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" required autocomplete="name" value="{{ f.get('name', '') }}"></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required autocomplete="email" value="{{ f.get('email', '') }}"></div>
+        <div class="privacy">{{ notice }}{% if org.privacy_contact_email %} Questions or requests: {{ org.privacy_contact_email }}.{% endif %}</div>
+        <button class="btn primary block" type="submit">Check in</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

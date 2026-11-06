@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, chip, avatar %}
+{% block title %}{{ cls.name }} · {{ s.date|dt('%d %b') }}{% endblock %}
+{% block content %}
+<div data-live-url="{{ url_for('tutor.session_live', session_id=s.id) }}" data-live-version="{{ live_version }}">
+<div class="page-head">
+  <div>
+    <p class="small muted m0"><a href="{{ url_for('tutor.class_detail', class_id=cls.id) }}">← {{ cls.name }}</a></p>
+    <h1>{{ s.local_start()|dt('%A %d %B · %H:%M') }}</h1>
+  </div>
+  <div class="actions">
+    {% if cls.qr_checkin_enabled and s.status == 'scheduled' %}<a class="btn" href="{{ url_for('tutor.session_qr', session_id=s.id) }}">Show QR code</a>{% endif %}
+    {% if s.status == 'scheduled' and not in_future and students %}
+      <form class="inline" method="post" action="{{ url_for('tutor.session_mark_all', session_id=s.id) }}">{{ csrf() }}<button class="btn primary" type="submit">Mark all present</button></form>
+    {% endif %}
+    {% if s.status == 'scheduled' %}
+      <form class="inline" method="post" action="{{ url_for('tutor.session_status', session_id=s.id, action='cancel') }}">{{ csrf() }}<button class="btn" type="submit">Cancel session</button></form>
+    {% else %}
+      <form class="inline" method="post" action="{{ url_for('tutor.session_status', session_id=s.id, action='restore') }}">{{ csrf() }}<button class="btn" type="submit">Restore session</button></form>
+    {% endif %}
+  </div>
+</div>
+
+{% if s.status == 'cancelled' %}
+  <div class="flash">This session is cancelled. Attendance can't be recorded.</div>
+{% elif in_future %}
+  <div class="flash">This session hasn't happened yet. You can record attendance on the day.</div>
+{% endif %}
+
+<div class="summary" aria-label="Summary">
+  {{ chip('present') }} <strong>{{ counts.present }}</strong>
+  {{ chip('late') }} <strong>{{ counts.late }}</strong>
+  {{ chip('absent') }} <strong>{{ counts.absent }}</strong>
+  {{ chip('pending') }} <strong>{{ counts.pending }}</strong>
+</div>
+
+{% if review %}
+<section class="card mb4" aria-labelledby="rev-h">
+  <h2 id="rev-h">Needs your review ({{ review|length }})</h2>
+  <p class="muted small">These people checked in themselves but aren't enrolled in this class, or their email isn't registered.</p>
+  <ul class="list flush-list">
+    {% for a in review %}<li>
+      <span><strong>{{ a.submitted_name }}</strong><br><span class="muted small">{{ a.submitted_email }}</span></span>
+      <span class="pill-row">{{ chip(a.status) }}
+      <form class="inline" method="post" action="{{ url_for('tutor.session_resolve', session_id=s.id, att_id=a.id) }}">{{ csrf() }}<button class="btn small" type="submit">Enrol in class</button></form></span>
+    </li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if students %}
+<div class="tiles wide">
+  {% for st in students %}{% set a = att.get(st.id) %}{% set cur = a.status if a else 'pending' %}
+  <article class="att-tile" id="st{{ st.id }}">
+    <header>{{ avatar(st.name) }}<span class="name">{{ st.name }}</span></header>
+    <div>{{ chip(cur) }}{% if a and a.source == 'self' %} <span class="muted small">self check-in</span>{% endif %}</div>
+    {% if s.status == 'scheduled' and not in_future %}
+    <form method="post" action="{{ url_for('tutor.session_mark', session_id=s.id) }}">
+      {{ csrf() }}<input type="hidden" name="student_id" value="{{ st.id }}">
+      <div class="seg" role="group" aria-label="Attendance for {{ st.name }}">
+        <button type="submit" name="status" value="present" class="{{ 'on present' if cur == 'present' }}" {% if cur == 'present' %}aria-pressed="true"{% endif %}>Present</button>
+        <button type="submit" name="status" value="late" class="{{ 'on late' if cur == 'late' }}" {% if cur == 'late' %}aria-pressed="true"{% endif %}>Late</button>
+        <button type="submit" name="status" value="absent" class="{{ 'on absent' if cur == 'absent' }}" {% if cur == 'absent' %}aria-pressed="true"{% endif %}>Absent</button>
+      </div>
+      {% if a %}<button class="btn quiet small clear" type="submit" name="status" value="none">Clear</button>{% endif %}
+    </form>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card empty"><p>No students are enrolled in this class yet.</p><a class="btn" href="{{ url_for('tutor.class_detail', class_id=cls.id) }}#roster">Add students</a></div>
+{% endif %}
+
+{% if s.status == 'scheduled' and not in_future and others %}
+<section class="card mt6">
+  <h2>Add a student who isn't enrolled</h2>
+  <form method="post" action="{{ url_for('tutor.session_add', session_id=s.id) }}" class="searchbar">
+    {{ csrf() }}
+    <label class="sr-only" for="add_student">Student</label>
+    <select id="add_student" name="student_id">{% for st in others %}<option value="{{ st.id }}">{{ st.name }} ({{ st.email }})</option>{% endfor %}</select>
+    <button class="btn" type="submit">Add as present</button>
+  </form>
+  <p class="muted small mt2">Adding a student also enrols them in this class.</p>
+</section>
+{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/live.js') }}"></script>{% endblock %}

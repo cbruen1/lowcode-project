@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Import students{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Import students{% if cls %} into {{ cls.name }}{% endif %}</h1></div>
+{% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+{% if rows is none %}
+<form class="card form-narrow" method="post" enctype="multipart/form-data">
+  {{ csrf() }}
+  <p>Upload a CSV file with two columns: <strong>name</strong> and <strong>email</strong>. A header row is optional. You'll see a preview before anything is saved.</p>
+  <div class="field"><label for="file">CSV file</label><input id="file" name="file" type="file" accept=".csv,text/csv"></div>
+  <div class="field"><label for="csv">…or paste the rows</label><textarea id="csv" name="csv" placeholder="Aoife Murphy, aoife@example.com">{{ text }}</textarea></div>
+  <button class="btn primary" type="submit">Preview</button>
+</form>
+{% else %}
+{% set ok = rows|selectattr('status', 'in', ['new', 'existing'])|list %}
+<div class="card flush scroll-x">
+  <table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Result</th></tr></thead>
+    <tbody>{% for r in rows %}<tr>
+      <td data-label="Name">{{ r.name }}</td><td data-label="Email">{{ r.email }}</td>
+      <td data-label="Result">{% if r.status == 'new' %}<span class="chip present"><span aria-hidden="true">✓</span>New student</span>
+        {% elif r.status == 'existing' %}<span class="chip neutral"><span aria-hidden="true">○</span>Already registered{% if cls %}, will be enrolled{% endif %}</span>
+        {% else %}<span class="chip absent"><span aria-hidden="true">✕</span>Skipped: {{ r.error }}</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+<form method="post" class="actions mt4">
+  {{ csrf() }}<input type="hidden" name="confirm" value="1"><input type="hidden" name="csv" value="{{ text }}">
+  <button class="btn primary" type="submit" {{ 'disabled' if not ok }}>Import {{ ok|length }} student{{ '' if ok|length == 1 else 's' }}</button>
+  <a class="btn" href="">Start again</a>
+</form>
+{% endif %}
+{% endblock %}
