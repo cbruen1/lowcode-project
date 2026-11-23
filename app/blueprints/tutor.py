@@ -411,7 +411,8 @@ def students():
     error = None
     if request.method == "POST":
         try:
-            st, was_new = services.create_student(org_id, request.form.get("name"), request.form.get("email"))
+            st, was_new = services.create_student(org_id, request.form.get("name"), request.form.get("email"),
+                                                  request.form.get("nationality"))
             db.session.commit()
             flash("Student added." if was_new else "That email is already registered; showing the existing student.", "ok")
             return redirect(url_for("tutor.students", selected=st.id))

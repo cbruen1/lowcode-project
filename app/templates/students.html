@@ -36,6 +36,7 @@
           <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" required value="{{ request.form.get('name', '') }}"></div>
           <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required value="{{ request.form.get('email', '') }}"></div>
         </div>
+        <div class="field"><label for="nationality">Nationality <span class="muted small">(optional)</span></label><input id="nationality" name="nationality" type="text" maxlength="100" value="{{ request.form.get('nationality', '') }}"></div>
         <button class="btn primary" type="submit">Add student</button>
       </form>
     </details>
@@ -46,6 +47,7 @@
     <div class="avatar big" aria-hidden="true">{{ selected.name|initials }}</div>
     <h2 class="mt3">{{ selected.name }}</h2>
     <p class="muted">{{ selected.email }}</p>
+    {% if selected.nationality %}<p class="small"><span class="muted">Nationality:</span> {{ selected.nationality }}</p>{% endif %}
     <div class="stats">
       <div><strong>{{ detail.present }}</strong><span class="small muted">Present</span></div>
       <div><strong>{{ detail.late }}</strong><span class="small muted">Late</span></div>

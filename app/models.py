@@ -100,12 +100,16 @@ def load_user(uid):
     return None
 
 
+NATIONALITY_MAX = 100
+
+
 class Student(db.Model):
     __tablename__ = "student"
     id = db.Column(db.Integer, primary_key=True)
     organisation_id = db.Column(db.Integer, db.ForeignKey("organisation.id"), nullable=False, index=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(255), nullable=False)
+    nationality = db.Column(db.String(NATIONALITY_MAX), nullable=False, default="", server_default="")
     created_at = db.Column(db.DateTime, nullable=False, default=now_utc)
 
     __table_args__ = (Index("uq_student_org_email", "organisation_id", "email", unique=True),)
