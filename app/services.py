@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo, available_timezones
 from sqlalchemy import func
 
 from .extensions import db
-from .models import (Attendance, AuditLog, Class, Enrolment, Organisation, Session, Student,
+from .models import (NATIONALITY_MAX, Attendance, AuditLog, Class, Enrolment, Organisation, Session, Student,
                      User, new_temp_password)
 from .timeutil import local_to_utc, now_utc, occurrence_dates, today_local, utc_to_local
 
@@ -248,16 +248,19 @@ def resolve_unmatched(att: Attendance, actor):
 
 
 # ---------- students ----------
-def create_student(org_id, name, email) -> tuple[Student, bool]:
-    name, email = (name or "").strip(), norm_email(email)
+def create_student(org_id, name, email, nationality="") -> tuple[Student, bool]:
+    """An existing student (same email) is returned unchanged, including their nationality."""
+    name, email, nationality = (name or "").strip(), norm_email(email), (nationality or "").strip()
     if not name or len(name) > 200:
         raise ServiceError("Enter the student's name.")
     if not valid_email(email):
         raise ServiceError("Enter a valid email address.")
+    if len(nationality) > NATIONALITY_MAX:
+        raise ServiceError(f"Nationality must be {NATIONALITY_MAX} characters or fewer.")
     existing = Student.query.filter_by(organisation_id=org_id, email=email).first()
     if existing:
         return existing, False
-    st = Student(organisation_id=org_id, name=name, email=email)
+    st = Student(organisation_id=org_id, name=name, email=email, nationality=nationality)
     db.session.add(st)
     db.session.flush()
     return st, True
@@ -293,8 +296,13 @@ def delete_student_data(student: Student, actor):
 
 
 # ---------- CSV import ----------
+_HEADER_NAMES = {"name", "full name", "student_name", "student name"}
+_HEADER_EMAILS = {"email", "e-mail", "email address", "student_email", "student email"}
+
+
 def parse_csv(text: str):
-    """Return list of dicts: name, email, status (new|existing|invalid|duplicate), error."""
+    """Columns: name, email, optional nationality. Header row optional.
+    Return list of dicts: name, email, nationality, status (new|existing|invalid|duplicate), error."""
     text = text.lstrip("﻿")
     rows = list(csv.reader(io.StringIO(text)))
     out, seen = [], set()
@@ -303,13 +311,17 @@ def parse_csv(text: str):
             continue
         name = r[0].strip() if len(r) > 0 else ""
         email = norm_email(r[1]) if len(r) > 1 else ""
-        if i == 0 and name.lower() in ("name", "full name") and email in ("email", "e-mail", "email address"):
+        nationality = r[2].strip() if len(r) > 2 else ""
+        if i == 0 and name.lower() in _HEADER_NAMES and email in _HEADER_EMAILS:
             continue
-        item = {"line": i + 1, "name": name, "email": email, "status": "new", "error": ""}
+        item = {"line": i + 1, "name": name, "email": email, "nationality": nationality,
+                "status": "new", "error": ""}
         if not name:
             item.update(status="invalid", error="Missing name")
         elif not valid_email(email):
             item.update(status="invalid", error="Invalid email")
+        elif len(nationality) > NATIONALITY_MAX:
+            item.update(status="invalid", error="Nationality too long")
         elif email in seen:
             item.update(status="duplicate", error="Repeated in file")
         seen.add(email)
@@ -330,7 +342,7 @@ def apply_import(org_id, rows, cls: Class | None, actor):
     for r in preview_import(org_id, rows):
         if r["status"] not in ("new", "existing"):
             continue
-        st, was_new = create_student(org_id, r["name"], r["email"])
+        st, was_new = create_student(org_id, r["name"], r["email"], r["nationality"])
         created += was_new
         linked += not was_new
         if cls is not None:

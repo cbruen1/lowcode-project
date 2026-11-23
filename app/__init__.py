@@ -26,8 +26,8 @@ def create_app(config=None):
     login_manager.login_view = "auth.login"
 
     from . import models  # noqa: F401
-    from .blueprints import admin, auth, checkin, platform, tutor
-    for bp in (auth.bp, platform.bp, admin.bp, tutor.bp, checkin.bp):
+    from .blueprints import admin, auth, checkin, hooks, platform, tutor
+    for bp in (auth.bp, platform.bp, admin.bp, tutor.bp, checkin.bp, hooks.bp):
         app.register_blueprint(bp)
 
     from .cli import register as register_cli

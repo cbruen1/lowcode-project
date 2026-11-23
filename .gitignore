@@ -7,3 +7,4 @@ instance/
 *.db-shm
 .pytest_cache/
 .env
+Claude outputs/attendance-tracker.zip

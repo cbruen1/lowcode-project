@@ -7,18 +7,18 @@
 {% if rows is none %}
 <form class="card form-narrow" method="post" enctype="multipart/form-data">
   {{ csrf() }}
-  <p>Upload a CSV file with two columns: <strong>name</strong> and <strong>email</strong>. A header row is optional. You'll see a preview before anything is saved.</p>
+  <p>Upload a CSV file with the columns <strong>name</strong>, <strong>email</strong> and, optionally, <strong>nationality</strong>. A header row is optional. You'll see a preview before anything is saved.</p>
   <div class="field"><label for="file">CSV file</label><input id="file" name="file" type="file" accept=".csv,text/csv"></div>
-  <div class="field"><label for="csv">…or paste the rows</label><textarea id="csv" name="csv" placeholder="Aoife Murphy, aoife@example.com">{{ text }}</textarea></div>
+  <div class="field"><label for="csv">…or paste the rows</label><textarea id="csv" name="csv" placeholder="Aoife Murphy, aoife@example.com, Irish">{{ text }}</textarea></div>
   <button class="btn primary" type="submit">Preview</button>
 </form>
 {% else %}
 {% set ok = rows|selectattr('status', 'in', ['new', 'existing'])|list %}
 <div class="card flush scroll-x">
   <table class="table">
-    <thead><tr><th>Name</th><th>Email</th><th>Result</th></tr></thead>
+    <thead><tr><th>Name</th><th>Email</th><th>Nationality</th><th>Result</th></tr></thead>
     <tbody>{% for r in rows %}<tr>
-      <td data-label="Name">{{ r.name }}</td><td data-label="Email">{{ r.email }}</td>
+      <td data-label="Name">{{ r.name }}</td><td data-label="Email">{{ r.email }}</td><td data-label="Nationality">{{ r.nationality }}</td>
       <td data-label="Result">{% if r.status == 'new' %}<span class="chip present"><span aria-hidden="true">✓</span>New student</span>
         {% elif r.status == 'existing' %}<span class="chip neutral"><span aria-hidden="true">○</span>Already registered{% if cls %}, will be enrolled{% endif %}</span>
         {% else %}<span class="chip absent"><span aria-hidden="true">✕</span>Skipped: {{ r.error }}</span>{% endif %}</td></tr>{% endfor %}</tbody>
